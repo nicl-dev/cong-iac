@@ -1,0 +1,75 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Welche Umgebung soll zerstört werden?"
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  TF_VERSION: 1.8.0
+  TF_WORKING_DIR: terraform
+  TF_BACKEND_BUCKET: niclas-test-terraform-state
+
+jobs:
+  destroy:
+    name: Terraform Destroy - ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Prepare Directory
+        run: mkdir -p ${{ env.TF_WORKING_DIR }}
+
+      - name: Write GCP credentials to file safely
+        run: |
+          echo "${{ secrets.GOOGLE_CREDENTIALS }}" | base64 --decode > gcp-key.json
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Set backend prefix for ${{ github.event.inputs.environment }}
+        run: echo "TF_BACKEND_PREFIX=gke/${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+
+      - name: Terraform Init - prefix ${{ env.TF_BACKEND_PREFIX }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
+            -backend-config="prefix=${{ env.TF_BACKEND_PREFIX }}"
+
+      - name: Generate tfvars file dynamically
+        run: |
+          echo "gcp_project=\"${{ secrets.GOOGLE_PROJECT }}\"" > env.tfvars
+          echo "gcp_region=\"${{ secrets.GOOGLE_REGION }}\"" >> env.tfvars
+
+          if [[ "${{ github.event.inputs.environment }}" == "dev" ]]; then
+            echo "gke_cluster_name=\"${{ secrets.DEV_CLUSTER_NAME }}\"" >> env.tfvars
+            echo "gke_node_count=${{ secrets.DEV_NODE_COUNT }}" >> env.tfvars
+            echo "environment=\"dev\"" >> env.tfvars
+          elif [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
+            echo "gke_cluster_name=\"${{ secrets.STAGING_CLUSTER_NAME }}\"" >> env.tfvars
+            echo "gke_node_count=${{ secrets.STAGING_NODE_COUNT }}" >> env.tfvars
+            echo "environment=\"staging\"" >> env.tfvars
+          else
+            echo "gke_cluster_name=\"${{ secrets.PROD_CLUSTER_NAME }}\"" >> env.tfvars
+            echo "gke_node_count=${{ secrets.PROD_NODE_COUNT }}" >> env.tfvars
+            echo "environment=\"prod\"" >> env.tfvars
+          fi
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve -var-file=env.tfvars
