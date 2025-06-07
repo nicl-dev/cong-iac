@@ -8,11 +8,17 @@ on:
 env:
   TF_VERSION: 1.8.0
   TF_WORKING_DIR: terraform
+  TF_BACKEND_BUCKET: cong-iac-terraform-state
 
 jobs:
   plan:
-    name: Terraform Plan
+    name: Terraform Plan (${{ matrix.environment }})
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        environment: [dev, staging, prod]
+
     defaults:
       run:
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -33,18 +39,24 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Init Terraform
-        run: terraform init
+      - name: Set backend prefix for ${{ matrix.environment }}
+        run: echo "TF_BACKEND_PREFIX=gke/${{ matrix.environment }}" >> $GITHUB_ENV
+
+      - name: Terraform Init - prefix ${{ env.TF_BACKEND_PREFIX }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
+            -backend-config="prefix=${{ env.TF_BACKEND_PREFIX }}"
 
       - name: Generate tfvars file dynamically
         run: |
           echo "gcp_project=\"${{ secrets.GOOGLE_PROJECT }}\"" > env.tfvars
           echo "gcp_region=\"${{ secrets.GOOGLE_REGION }}\"" >> env.tfvars
 
-          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+          if [[ "${{ matrix.environment }}" == "dev" ]]; then
             echo "gke_cluster_name=\"${{ secrets.DEV_CLUSTER_NAME }}\"" >> env.tfvars
             echo "gke_node_count=${{ secrets.DEV_NODE_COUNT }}" >> env.tfvars
-          elif [[ "${{ github.ref_name }}" == "staging" ]]; then
+          elif [[ "${{ matrix.environment }}" == "staging" ]]; then
             echo "gke_cluster_name=\"${{ secrets.STAGING_CLUSTER_NAME }}\"" >> env.tfvars
             echo "gke_node_count=${{ secrets.STAGING_NODE_COUNT }}" >> env.tfvars
           else
