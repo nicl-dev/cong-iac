@@ -79,4 +79,4 @@ jobs:
           fi
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve -var-file=env.tfvars
+        run: terraform destroy -no-color -auto-approve -var-file=env.tfvars
