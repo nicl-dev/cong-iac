@@ -1,14 +1,3 @@
-terraform {
-  required_version = ">= 1.4.0"
-
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = ">= 4.0"
-    }
-  }
-}
-
 resource "google_compute_network" "vpc_network" {
   name                    = "iac-vpc"
   auto_create_subnetworks = false
