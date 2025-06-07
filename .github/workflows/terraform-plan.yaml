@@ -53,15 +53,13 @@ jobs:
         run: |
           echo "gcp_project=\"${{ secrets.GOOGLE_PROJECT }}\"" > env.tfvars
           echo "gcp_region=\"${{ secrets.GOOGLE_REGION }}\"" >> env.tfvars
+          echo "environment=\"${{ matrix.environment }}\"" >> env.tfvars
 
           if [[ "${{ matrix.environment }}" == "dev" ]]; then
-            echo "gke_cluster_name=\"${{ secrets.DEV_CLUSTER_NAME }}\"" >> env.tfvars
             echo "gke_node_count=${{ secrets.DEV_NODE_COUNT }}" >> env.tfvars
           elif [[ "${{ matrix.environment }}" == "staging" ]]; then
-            echo "gke_cluster_name=\"${{ secrets.STAGING_CLUSTER_NAME }}\"" >> env.tfvars
             echo "gke_node_count=${{ secrets.STAGING_NODE_COUNT }}" >> env.tfvars
           else
-            echo "gke_cluster_name=\"${{ secrets.PROD_CLUSTER_NAME }}\"" >> env.tfvars
             echo "gke_node_count=${{ secrets.PROD_NODE_COUNT }}" >> env.tfvars
           fi
 
