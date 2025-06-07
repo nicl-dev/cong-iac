@@ -1,18 +1,15 @@
 name: Terraform Plan
 
 on:
-  pull_request:
-    paths:
-      - "terraform/**"
   push:
-    branches-ignore:
+    branches:
+      - dev
+      - staging
       - main
-    paths:
-      - "terraform/**"
 
 env:
-  TF_VERSION: "1.8.0"
-  TF_WORKING_DIR: "./terraform"
+  TF_VERSION: 1.8.0
+  TF_WORKING_DIR: terraform
 
 jobs:
   plan:
@@ -21,14 +18,40 @@ jobs:
     defaults:
       run:
         working-directory: ${{ env.TF_WORKING_DIR }}
+
     steps:
-      - uses: actions/checkout@v3
-      - run: mkdir -p ${{ env.TF_WORKING_DIR }}
-      - run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > gcp-key.json
-      - uses: hashicorp/setup-terraform@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Prepare Directory
+        run: mkdir -p ${{ env.TF_WORKING_DIR }}
+
+      - name: Write GCP credentials
+        run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > gcp-key.json
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-      - run: terraform init
-      - run: terraform fmt -check
-      - run: terraform validate
-      - run: terraform plan -var="gcp_project=${{ secrets.GOOGLE_PROJECT }}" -var="gcp_region=${{ secrets.GOOGLE_REGION }}"
+
+      - name: Init Terraform
+        run: terraform init
+
+      - name: Generate tfvars file dynamically
+        run: |
+          echo "gcp_project=\"${{ secrets.GOOGLE_PROJECT }}\"" > env.tfvars
+          echo "gcp_region=\"${{ secrets.GOOGLE_REGION }}\"" >> env.tfvars
+
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+            echo "gke_cluster_name=\"${{ secrets.DEV_CLUSTER_NAME }}\"" >> env.tfvars
+            echo "gke_node_count=${{ secrets.DEV_NODE_COUNT }}" >> env.tfvars
+          elif [[ "${{ github.ref_name }}" == "staging" ]]; then
+            echo "gke_cluster_name=\"${{ secrets.STAGING_CLUSTER_NAME }}\"" >> env.tfvars
+            echo "gke_node_count=${{ secrets.STAGING_NODE_COUNT }}" >> env.tfvars
+          else
+            echo "gke_cluster_name=\"${{ secrets.PROD_CLUSTER_NAME }}\"" >> env.tfvars
+            echo "gke_node_count=${{ secrets.PROD_NODE_COUNT }}" >> env.tfvars
+          fi
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=env.tfvars

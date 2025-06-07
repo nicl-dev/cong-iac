@@ -1,10 +1,19 @@
 variable "gcp_project" {
-  description = "Google Cloud project ID"
   type        = string
+  description = "GCP project ID"
 }
 
 variable "gcp_region" {
-  description = "Region to deploy resources in"
-  type        = string
-  default     = "europe-west1"
+  type    = string
+  default = "europe-west1"
+}
+
+variable "gke_cluster_name" {
+  type    = string
+  default = "ci-cd-demo-cluster"
+}
+
+variable "gke_node_count" {
+  type    = number
+  default = 1
 }
