@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Welche Umgebung soll zerstört werden?"
+        description: "Which environment shall be destroyed?"
         required: true
         type: choice
         options:
@@ -12,16 +12,23 @@ on:
           - staging
           - prod
 
+      confirm_destroy:
+        description: "Enter 'true' to confirm destroy"
+        required: true
+        default: "false"
+
 env:
   TF_VERSION: 1.8.0
   TF_WORKING_DIR: terraform
-  TF_BACKEND_BUCKET: niclas-test-terraform-state
+  TF_BACKEND_BUCKET: cong-iac-terraform-state
 
 jobs:
   destroy:
     name: Terraform Destroy - ${{ github.event.inputs.environment }}
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
+
+    if: ${{ github.event.inputs.confirm_destroy == 'true' }}
 
     defaults:
       run:
