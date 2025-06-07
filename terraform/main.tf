@@ -12,8 +12,9 @@ resource "google_compute_subnetwork" "subnet" {
 
 
 resource "google_container_cluster" "primary" {
-  name     = "cong-gke-${var.environment}"
-  location = var.gcp_region
+  name                = "cong-gke-${var.environment}"
+  location            = var.gcp_region
+  deletion_protection = false
 
   network    = google_compute_network.vpc_network.name
   subnetwork = google_compute_subnetwork.subnet.name
