@@ -65,4 +65,4 @@ jobs:
           fi
 
       - name: Terraform Plan
-        run: terraform plan -var-file=env.tfvars
+        run: terraform plan -no-color -var-file=env.tfvars
