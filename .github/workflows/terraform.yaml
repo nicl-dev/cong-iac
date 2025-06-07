@@ -1,0 +1,47 @@
+name: Terraform CI/CD
+
+on:
+  push:
+    branches: [main]
+
+env:
+  TF_VERSION: "1.8.0"
+  TF_WORKING_DIR: "./terraform"
+
+jobs:
+  terraform:
+    name: "Terraform Workflow"
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Write GCP credentials to file
+        run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > ${{ env.TF_WORKING_DIR }}/gcp-key.json
+
+      - name: Terraform Format
+        run: terraform fmt -check
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -var="gcp_project=${{ secrets.GOOGLE_PROJECT }}" -var="gcp_region=${{ secrets.GOOGLE_REGION }}"
+
+      - name: Terraform Apply
+        # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch'
+        run: terraform apply -auto-approve
