@@ -26,6 +26,9 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
+      - name: Create Terraform directory
+        run: mkdir -p ${{ env.TF_WORKING_DIR }}
+
       - name: Write GCP credentials to file
         run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > ${{ env.TF_WORKING_DIR }}/gcp-key.json
 
