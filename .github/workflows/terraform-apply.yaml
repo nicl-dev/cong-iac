@@ -38,13 +38,13 @@ jobs:
         run: |
           echo "${{ secrets.GOOGLE_CREDENTIALS }}" | base64 --decode > gcp-key.json
 
+      - name: Export ADC credentials
+        run: echo "GOOGLE_APPLICATION_CREDENTIALS=$PWD/gcp-key.json" >> $GITHUB_ENV
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Set backend prefix for ${{ github.event.inputs.environment }}
-        run: echo "TF_BACKEND_PREFIX=gke/${{ github.event.inputs.environment }}" >> $GITHUB_ENV
 
       - name: Terraform Init
         run: |
