@@ -39,14 +39,11 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Set backend prefix for ${{ matrix.environment }}
-        run: echo "TF_BACKEND_PREFIX=gke/${{ matrix.environment }}" >> $GITHUB_ENV
-
-      - name: Terraform Init - prefix ${{ env.TF_BACKEND_PREFIX }}
+      - name: Terraform Init - prefix gke/${{ matrix.environment }}
         run: |
           terraform init \
             -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-            -backend-config="prefix=${{ env.TF_BACKEND_PREFIX }}"
+            -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Generate tfvars file dynamically
         run: |
