@@ -26,8 +26,9 @@ jobs:
       - name: Prepare Directory
         run: mkdir -p ${{ env.TF_WORKING_DIR }}
 
-      - name: Write GCP credentials
-        run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > gcp-key.json
+      - name: Write GCP credentials to file safely
+        run: |
+          echo "${{ secrets.GOOGLE_CREDENTIALS }}" | base64 --decode > gcp-key.json
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
