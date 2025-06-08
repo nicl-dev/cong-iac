@@ -1,8 +1,5 @@
 terraform {
-  backend "gcs" {
-    bucket = ""
-    prefix = ""
-  }
+  backend "gcs" {}
   required_version = ">= 1.4.0"
 
   required_providers {
