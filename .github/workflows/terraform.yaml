@@ -40,7 +40,8 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform Init
-        run: terraform init -no-color \
+        run: terraform init \
+          -no-color \
           -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
           -backend-config="prefix=gke/${{ matrix.environment }}"
 
