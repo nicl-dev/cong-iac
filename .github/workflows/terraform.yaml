@@ -42,11 +42,23 @@ jobs:
       - name: Terraform Init
         run: |
           terraform init -no-color \
-          -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-          -backend-config="prefix=gke/${{ matrix.environment }}"
+            -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
+            -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Terraform Plan
         run: terraform plan -no-color -out=tfplan-${{ matrix.environment }}.out
+
+      - name: Verify Plan File Exists
+        run: |
+          if [ ! -f "tfplan-${{ matrix.environment }}.out" ]; then
+            echo "Plan file missing"; exit 1
+          fi
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ matrix.environment }}
+          path: terraform/environments/${{ matrix.environment }}/tfplan-${{ matrix.environment }}.out
 
       - name: Save output env
         id: set-output-env
@@ -81,6 +93,12 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ matrix.environment }}
+          path: terraform/environments/${{ matrix.environment }}
 
       - name: Terraform Init
         run: |
