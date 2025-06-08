@@ -46,7 +46,7 @@ jobs:
             -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Terraform Plan
-        run: terraform plan -no-color -out=tfplan-${{ matrix.environment }}.out
+        run: terraform plan -no-color -out=tfplan-${{ matrix.environment }}-${{ github.sha }}.out
 
       - name: Verify Plan File Exists
         run: |
@@ -57,8 +57,8 @@ jobs:
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tfplan-${{ matrix.environment }}
-          path: terraform/environments/${{ matrix.environment }}/tfplan-${{ matrix.environment }}.out
+          name: tfplan-${{ matrix.environment }}-${{ github.sha }}
+          path: terraform/environments/${{ matrix.environment }}/tfplan-${{ matrix.environment }}-${{ github.sha }}.out
 
       - name: Save output env
         id: set-output-env
@@ -97,7 +97,7 @@ jobs:
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4
         with:
-          name: tfplan-${{ matrix.environment }}
+          name: tfplan-${{ matrix.environment }}-${{ github.sha }}
           path: terraform/environments/${{ matrix.environment }}
 
       - name: Terraform Init
