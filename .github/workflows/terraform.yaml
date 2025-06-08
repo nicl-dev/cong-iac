@@ -1,0 +1,86 @@
+name: Terraform Plan + Apply
+
+on:
+  push:
+    branches:
+      - "**"
+
+env:
+  TF_VERSION: 1.8.0
+  TF_BACKEND_BUCKET: cong-iac-terraform-state
+
+jobs:
+  plan:
+    name: Terraform Plan (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        environment: [dev, staging, prod]
+
+    defaults:
+      run:
+        working-directory: terraform/environments/${{ matrix.environment }}
+
+    outputs:
+      environment: ${{ steps.set-output-env.outputs.env }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Credentials
+        run: |
+          echo "${{ secrets.GOOGLE_CREDENTIALS }}" | base64 --decode > gcp-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$PWD/gcp-key.json" >> $GITHUB_ENV
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: |
+          terraform init -no-color \
+          -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
+          -backend-config="prefix=gke/${{ matrix.environment }}"
+
+      - name: Terraform Plan
+        run: terraform plan -no-color -out=tfplan-${{ matrix.environment }}.out
+
+      - name: Save output env
+        id: set-output-env
+        run: echo "env=${{ matrix.environment }}" >> $GITHUB_OUTPUT
+
+  apply:
+    name: Terraform Apply
+    needs: plan
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: apply
+    defaults:
+      run:
+        working-directory: terraform/environments/${{ needs.plan.outputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Credentials
+        run: |
+          echo "${{ secrets.GOOGLE_CREDENTIALS }}" | base64 --decode > gcp-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$PWD/gcp-key.json" >> $GITHUB_ENV
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init -no-color \
+          -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
+          -backend-config="prefix=gke/${{ needs.plan.outputs.environment }}"
+
+      - name: Terraform Apply
+        run: terraform apply -no-color tfplan-${{ needs.plan.outputs.environment }}.out
