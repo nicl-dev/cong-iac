@@ -101,4 +101,4 @@ jobs:
             -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Terraform Apply
-        run: terraform apply -no-color tfplan-${{ matrix.environment }}.out
+        run: terraform apply -no-color tfplan-${{ matrix.environment }}-${{ github.sha }}.out
