@@ -68,11 +68,6 @@ jobs:
         with:
           sarif_file: results.sarif
 
-      - name: Upload Checkov SARIF Results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: terraform/environments/${{ matrix.environment }}/checkov.sarif
-
       - name: Terraform Init
         run: |
           terraform init -no-color \
