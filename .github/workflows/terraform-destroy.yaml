@@ -11,7 +11,6 @@ on:
           - dev
           - staging
           - prod
-
       confirm_destroy:
         description: "Enter 'true' to confirm destroy"
         required: true
@@ -19,16 +18,18 @@ on:
 
 env:
   TF_VERSION: 1.8.0
-  TF_WORKING_DIR: terraform
   TF_BACKEND_BUCKET: cong-iac-terraform-state
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   destroy:
     name: Terraform Destroy - ${{ github.event.inputs.environment }}
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
-
-    if: ${{ github.event.inputs.confirm_destroy == 'true' }}
+    environment: ${{ github.event.inputs.environment != 'dev' && format('{0}', github.event.inputs.environment) || null }}
+    if: github.ref == 'refs/heads/main' && github.event.inputs.confirm_destroy == 'true'
 
     defaults:
       run:
@@ -38,15 +39,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Prepare Directory
-        run: mkdir -p ${{ env.TF_WORKING_DIR }}
-
-      - name: Write GCP credentials to file safely
-        run: |
-          echo "${{ secrets.GOOGLE_CREDENTIALS }}" | base64 --decode > gcp-key.json
-
-      - name: Export ADC credentials
-        run: echo "GOOGLE_APPLICATION_CREDENTIALS=$PWD/gcp-key.json" >> $GITHUB_ENV
+      - name: Authenticate to Google Cloud (via WIF)
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: terraform-ci@niclas-test.iam.gserviceaccount.com
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -55,29 +53,9 @@ jobs:
 
       - name: Terraform Init
         run: |
-          terraform init \
-            -no-color \
+          terraform init -no-color \
             -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
             -backend-config="prefix=gke/${{ github.event.inputs.environment }}"
 
-      - name: Generate tfvars file dynamically
-        run: |
-          echo "gcp_project=\"${{ secrets.GOOGLE_PROJECT }}\"" > env.tfvars
-          echo "gcp_region=\"${{ secrets.GOOGLE_REGION }}\"" >> env.tfvars
-
-          if [[ "${{ github.event.inputs.environment }}" == "dev" ]]; then
-            echo "gke_cluster_name=\"${{ secrets.DEV_CLUSTER_NAME }}\"" >> env.tfvars
-            echo "gke_node_count=${{ secrets.DEV_NODE_COUNT }}" >> env.tfvars
-            echo "environment=\"dev\"" >> env.tfvars
-          elif [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
-            echo "gke_cluster_name=\"${{ secrets.STAGING_CLUSTER_NAME }}\"" >> env.tfvars
-            echo "gke_node_count=${{ secrets.STAGING_NODE_COUNT }}" >> env.tfvars
-            echo "environment=\"staging\"" >> env.tfvars
-          else
-            echo "gke_cluster_name=\"${{ secrets.PROD_CLUSTER_NAME }}\"" >> env.tfvars
-            echo "gke_node_count=${{ secrets.PROD_NODE_COUNT }}" >> env.tfvars
-            echo "environment=\"prod\"" >> env.tfvars
-          fi
-
       - name: Terraform Destroy
-        run: terraform destroy -no-color -auto-approve -var-file=env.tfvars
+        run: terraform destroy -no-color -auto-approve
