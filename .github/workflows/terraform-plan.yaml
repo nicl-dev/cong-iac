@@ -63,3 +63,6 @@ jobs:
         with:
           name: tfplan-${{ matrix.environment }}-${{ github.sha }}
           path: terraform/environments/${{ matrix.environment }}/tfplan-${{ matrix.environment }}-${{ github.sha }}
+
+      - name: Output Commit Info
+        run: echo "::notice::Use commit SHA '${GITHUB_SHA}' to run apply"
