@@ -55,11 +55,11 @@ jobs:
             -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
             -backend-config="prefix=gke/${{ github.event.inputs.environment }}"
 
-      - name: Download Terraform Plan
+      - name: Download Terraform Plan Artifact
         uses: actions/download-artifact@v4
         with:
-          name: tfplan-${{ github.event.inputs.environment }}
-          path: terraform/environments/${{ github.event.inputs.environment }}
+          name: tfplan-${{ github.event.inputs.environment }}-${{ github.event.inputs.commit_sha }}
+          path: .
 
       - name: Terraform Apply
         run: terraform apply -no-color tfplan-${{ github.event.inputs.environment }}-${{ github.event.inputs.commit_sha }}
