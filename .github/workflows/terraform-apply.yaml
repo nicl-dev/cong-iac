@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Welche Umgebung soll deployed werden?"
+        description: "Which environemt shall be deployed?"
         required: true
         type: choice
-        options:
-          - dev
-          - staging
-          - prod
+        options: [dev, staging, prod]
+      commit_sha:
+        description: "SHA of plan to apply."
+        required: true
 
 env:
   TF_VERSION: 1.8.0
@@ -55,23 +55,11 @@ jobs:
             -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
             -backend-config="prefix=gke/${{ github.event.inputs.environment }}"
 
-      - name: Generate tfvars file dynamically
-        run: |
-          echo "gcp_project=\"${{ secrets.GOOGLE_PROJECT }}\"" > env.tfvars
-          echo "gcp_region=\"${{ secrets.GOOGLE_REGION }}\"" >> env.tfvars
-          echo "environment=\"${{ github.event.inputs.environment }}\"" >> env.tfvars
-
-          if [[ "${{ github.event.inputs.environment }}" == "dev" ]]; then
-            echo "gke_node_count=${{ secrets.DEV_NODE_COUNT }}" >> env.tfvars
-          elif [[ "${{ github.event.inputs.environment }}" == "staging" ]]; then
-            echo "gke_node_count=${{ secrets.STAGING_NODE_COUNT }}" >> env.tfvars
-          else
-            echo "gke_node_count=${{ secrets.PROD_NODE_COUNT }}" >> env.tfvars
-          fi
-
-      - name: Terraform Plan
-        run: terraform plan -no-color -var-file=env.tfvars
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ github.event.inputs.environment }}
+          path: terraform/environments/${{ github.event.inputs.environment }}
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
-        run: terraform apply -no-color -auto-approve -var-file=env.tfvars
+        run: terraform apply -no-color tfplan-${{ github.event.inputs.environment }}-${{ github.event.inputs.commit_sha }}

@@ -49,19 +49,17 @@ jobs:
             -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
             -backend-config="prefix=gke/${{ matrix.environment }}"
 
-      - name: Generate tfvars file dynamically
-        run: |
-          echo "gcp_project=\"${{ secrets.GOOGLE_PROJECT }}\"" > env.tfvars
-          echo "gcp_region=\"${{ secrets.GOOGLE_REGION }}\"" >> env.tfvars
-          echo "environment=\"${{ matrix.environment }}\"" >> env.tfvars
+      - name: Terraform Plan
+        run: terraform plan -no-color -out=tfplan-${{ matrix.environment }}-${{ github.sha }}
 
-          if [[ "${{ matrix.environment }}" == "dev" ]]; then
-            echo "gke_node_count=${{ secrets.DEV_NODE_COUNT }}" >> env.tfvars
-          elif [[ "${{ matrix.environment }}" == "staging" ]]; then
-            echo "gke_node_count=${{ secrets.STAGING_NODE_COUNT }}" >> env.tfvars
-          else
-            echo "gke_node_count=${{ secrets.PROD_NODE_COUNT }}" >> env.tfvars
+      - name: Verify Plan File Exists
+        run: |
+          if [ ! -f "tfplan-${{ matrix.environment }}-${{ github.sha }}" ]; then
+            echo "Plan file missing"; exit 1
           fi
 
-      - name: Terraform Plan
-        run: terraform plan -no-color -var-file=env.tfvars
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ matrix.environment }}-${{ github.sha }}
+          path: terraform/environments/${{ matrix.environment }}/tfplan-${{ matrix.environment }}-${{ github.sha }}
