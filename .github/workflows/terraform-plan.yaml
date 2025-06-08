@@ -50,13 +50,16 @@ jobs:
             -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Terraform Plan
-        run: terraform plan -no-color
+        run: terraform plan -no-color -var-file=env.tfvars -out=tfplan-${{ matrix.environment }}-${{ github.sha }}
+
+      - name: Verify Plan File Exists
+        run: |
+          if [ ! -f "tfplan-${{ matrix.environment }}-${{ github.sha }}" ]; then
+            echo "Plan file missing"; exit 1
+          fi
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:
           name: tfplan-${{ matrix.environment }}-${{ github.sha }}
-          path: terraform/environments/${{ matrix.environment }}/tfplan-${{ matrix.environment }}-${{ github.sha }}
-
-      - name: Output Commit Info
-        run: echo "::notice::Use commit SHA '${GITHUB_SHA}' to run apply"
+          path: tfplan-${{ matrix.environment }}-${{ github.sha }}
