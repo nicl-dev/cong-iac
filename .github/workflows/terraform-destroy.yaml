@@ -20,6 +20,10 @@ env:
   TF_VERSION: 1.8.0
   TF_BACKEND_BUCKET: cong-iac-terraform-state
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   destroy:
     name: Terraform Destroy - ${{ github.event.inputs.environment }}
@@ -35,10 +39,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup Credentials
-        run: |
-          echo "${{ secrets.GOOGLE_CREDENTIALS }}" | base64 --decode > gcp-key.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$PWD/gcp-key.json" >> $GITHUB_ENV
+      - name: Authenticate to Google Cloud (via WIF)
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: terraform-ci@niclas-test.iam.gserviceaccount.com
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -48,8 +54,8 @@ jobs:
       - name: Terraform Init
         run: |
           terraform init -no-color \
-          -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-          -backend-config="prefix=gke/${{ github.event.inputs.environment }}"
+            -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
+            -backend-config="prefix=gke/${{ github.event.inputs.environment }}"
 
       - name: Terraform Destroy
         run: terraform destroy -no-color -auto-approve
