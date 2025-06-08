@@ -50,7 +50,7 @@ jobs:
             -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Terraform Plan
-        run: terraform plan -no-color -var-file=env.tfvars -out=tfplan-${{ matrix.environment }}-${{ github.sha }}
+        run: terraform plan -no-color -out=tfplan-${{ matrix.environment }}-${{ github.sha }}
 
       - name: Verify Plan File Exists
         run: |
