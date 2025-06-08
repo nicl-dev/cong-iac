@@ -28,7 +28,7 @@ jobs:
   destroy:
     name: Terraform Destroy - ${{ github.event.inputs.environment }}
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment != 'dev' && format('{0}', github.event.inputs.environment) || null }}
+    environment: ${{ github.event.inputs.environment }}
     if: github.ref == 'refs/heads/main' && github.event.inputs.confirm_destroy == 'true'
 
     defaults:

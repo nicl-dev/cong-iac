@@ -73,7 +73,7 @@ jobs:
       matrix:
         environment: [dev, staging, prod]
 
-    environment: ${{ matrix.environment != 'dev' && format('{0}', matrix.environment) || null }}
+    environment: ${{ matrix.environment }}
 
     defaults:
       run:
