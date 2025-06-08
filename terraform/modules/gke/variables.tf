@@ -9,8 +9,8 @@ variable "gcp_region" {
 }
 
 variable "gke_cluster_name" {
-  type    = string
-  default = "cong-demo-cluster"
+  type        = string
+  description = "GKE cluster name"
 }
 
 variable "gke_node_count" {
