@@ -50,7 +50,7 @@ jobs:
             -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Terraform Plan
-        run: terraform plan -no-color -var-file=env.tfvars
+        run: terraform plan -no-color
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
