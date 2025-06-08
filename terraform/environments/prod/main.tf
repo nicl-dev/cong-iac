@@ -1,6 +1,6 @@
 module "gke" {
-  source           = "../../modules/gke"
-  environment      = "prod"
+  source           = "../modules/gke"
+  environment      = var.environment
   gcp_project      = var.gcp_project
   gcp_region       = var.gcp_region
   gke_cluster_name = var.gke_cluster_name
