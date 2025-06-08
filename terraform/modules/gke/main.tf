@@ -4,10 +4,11 @@ resource "google_compute_network" "vpc_network" {
 }
 
 resource "google_compute_subnetwork" "subnet" {
-  name          = "cong-subnet-${var.environment}"
-  ip_cidr_range = "10.10.0.0/16"
-  region        = var.gcp_region
-  network       = google_compute_network.vpc_network.id
+  name              = "cong-subnet-${var.environment}"
+  ip_cidr_range     = "10.10.0.0/16"
+  region            = var.gcp_region
+  network           = google_compute_network.vpc_network.id
+  invalid_attribute = true
 }
 
 
