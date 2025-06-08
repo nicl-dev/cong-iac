@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - "**"
+  pull_request:
+    branches:
+      - main
 
 env:
   TF_VERSION: 1.8.0
@@ -12,6 +15,7 @@ env:
 permissions:
   id-token: write
   contents: read
+  security-events: write
 
 jobs:
   plan:
@@ -44,6 +48,27 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
+      - name: Set up TFLint
+        uses: terraform-linters/setup-tflint@v1
+        with:
+          tflint_version: v0.50.3
+
+      - name: Run TFLint
+        run: tflint --recursive
+
+      - name: Checkov GitHub Action
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+          soft_fail: true
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        if: success() || failure()
+        with:
+          sarif_file: results.sarif
+
       - name: Terraform Init
         run: |
           terraform init -no-color \
@@ -51,7 +76,7 @@ jobs:
             -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Terraform Plan
-        run: terraform plan -no-color -out=tfplan-${{ matrix.environment }}-${{ github.sha }}.out
+        run: terraform plan -no-color -lock-timeout=60s -out=tfplan-${{ matrix.environment }}-${{ github.sha }}.out
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
@@ -107,4 +132,4 @@ jobs:
             -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Terraform Apply
-        run: terraform apply -no-color tfplan-${{ matrix.environment }}-${{ github.sha }}.out
+        run: terraform apply -no-color -lock-timeout=60s tfplan-${{ matrix.environment }}-${{ github.sha }}.out
