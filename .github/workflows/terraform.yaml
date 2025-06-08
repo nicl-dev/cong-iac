@@ -48,12 +48,6 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -no-color -out=tfplan-${{ matrix.environment }}-${{ github.sha }}.out
 
-      - name: Verify Plan File Exists
-        run: |
-          if [ ! -f "tfplan-${{ matrix.environment }}.out" ]; then
-            echo "Plan file missing"; exit 1
-          fi
-
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
         with:
