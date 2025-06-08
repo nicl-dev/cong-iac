@@ -56,11 +56,17 @@ jobs:
       - name: Run TFLint
         run: tflint --recursive
 
-      - name: Install Checkov
-        run: pip install checkov
+      - name: Checkov GitHub Action
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
 
-      - name: Run Checkov
-        run: checkov -d . --soft-fail
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        if: success() || failure()
+        with:
+          sarif_file: results.sarif
 
       - name: Upload Checkov SARIF Results
         uses: github/codeql-action/upload-sarif@v3
