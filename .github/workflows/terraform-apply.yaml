@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Welche Umgebung soll deployed werden?"
+        description: "Which environemt shall be deployed?"
         required: true
         type: choice
-        options:
-          - dev
-          - staging
-          - prod
+        options: [dev, staging, prod]
+      commit_sha:
+        description: "SHA of plan to apply."
+        required: true
 
 env:
   TF_VERSION: 1.8.0
