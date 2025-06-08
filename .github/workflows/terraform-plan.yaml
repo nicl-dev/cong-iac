@@ -62,4 +62,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tfplan-${{ matrix.environment }}-${{ github.sha }}
-          path: tfplan-${{ matrix.environment }}-${{ github.sha }}
+          path: terraform/environments/${{ matrix.environment }}/tfplan-${{ matrix.environment }}-${{ github.sha }}
