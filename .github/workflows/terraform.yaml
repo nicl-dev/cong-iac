@@ -63,7 +63,7 @@ jobs:
         run: checkov -d . --soft-fail
 
       - name: Upload Checkov SARIF Results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: terraform/environments/${{ matrix.environment }}/checkov.sarif
 
