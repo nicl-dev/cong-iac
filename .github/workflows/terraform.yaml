@@ -48,19 +48,19 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Install tflint and checkov
-        run: |
-          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-          pip install checkov
+      - name: Set up TFLint
+        uses: terraform-linters/setup-tflint@v1
+        with:
+          tflint_version: v0.50.3
 
-      - name: Run tflint
-        run: |
-          tflint --init
-          tflint .
+      - name: Run TFLint
+        run: tflint --recursive
 
-      - name: Run checkov
-        run: |
-          checkov -d . --framework terraform --output sarif --output-file-path checkov.sarif
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Run Checkov
+        run: checkov -d .
 
       - name: Upload Checkov SARIF Results
         uses: github/codeql-action/upload-sarif@v2
