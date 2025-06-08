@@ -58,4 +58,4 @@ jobs:
             -backend-config="prefix=gke/${{ github.event.inputs.environment }}"
 
       - name: Terraform Destroy
-        run: terraform destroy -no-color -auto-approve
+        run: terraform destroy -no-color -auto-approve -lock-timeout=60s
