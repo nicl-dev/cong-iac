@@ -97,8 +97,8 @@ jobs:
       - name: Terraform Init
         run: |
           terraform init -no-color \
-            -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-            -backend-config="prefix=gke/${{ matrix.environment }}"
+          -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
+          -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Terraform Apply
         run: terraform apply -no-color tfplan-${{ matrix.environment }}-${{ github.sha }}.out
