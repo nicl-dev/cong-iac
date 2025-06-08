@@ -53,7 +53,7 @@ jobs:
         run: terraform plan -no-color -var-file=env.tfvars
 
       - name: Upload Plan Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tfplan-${{ matrix.environment }}-${{ github.sha }}
           path: terraform/environments/${{ matrix.environment }}/tfplan-${{ matrix.environment }}-${{ github.sha }}
