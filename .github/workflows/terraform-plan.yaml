@@ -21,7 +21,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        working-directory: terraform/environments/${{ matrix.environment }}
 
     steps:
       - name: Checkout Code
