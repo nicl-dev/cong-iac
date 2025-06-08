@@ -53,15 +53,20 @@ jobs:
         run: echo "env=${{ matrix.environment }}" >> $GITHUB_OUTPUT
 
   apply:
-    name: Terraform Apply
+    name: Terraform Apply (${{ matrix.environment }})
     needs: plan
-    runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    environment:
-      name: apply
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        environment: [dev, staging, prod]
+
+    environment: ${{ matrix.environment != 'dev' && format('{0}', matrix.environment) || null }}
+
     defaults:
       run:
-        working-directory: terraform/environments/${{ needs.plan.outputs.environment }}
+        working-directory: terraform/environments/${{ matrix.environment }}
 
     steps:
       - name: Checkout
@@ -78,9 +83,10 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform Init
-        run: terraform init -no-color \
-          -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-          -backend-config="prefix=gke/${{ needs.plan.outputs.environment }}"
+        run: |
+          terraform init -no-color \
+            -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
+            -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Terraform Apply
-        run: terraform apply -no-color tfplan-${{ needs.plan.outputs.environment }}.out
+        run: terraform apply -no-color tfplan-${{ matrix.environment }}.out
