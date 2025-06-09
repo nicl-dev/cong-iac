@@ -8,5 +8,8 @@ terraform {
     }
   }
 
-  backend "gcs" {}
+  backend "gcs" {
+    bucket = "cong-iac-terraform-state"
+    prefix = "gke/prod"
+  }
 }

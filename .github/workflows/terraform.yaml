@@ -93,9 +93,7 @@ jobs:
 
       - name: Terraform Init
         run: |
-          terraform init -no-color \
-            -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-            -backend-config="prefix=gke/${{ matrix.environment }}"
+          terraform init -no-color
 
       - name: Terraform Validate
         run: terraform validate -no-color
@@ -152,9 +150,7 @@ jobs:
 
       - name: Terraform Init
         run: |
-          terraform init -no-color \
-            -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-            -backend-config="prefix=gke/${{ matrix.environment }}"
+          terraform init -no-color
 
       - name: Terraform Apply
         run: terraform apply -no-color tfplan-${{ matrix.environment }}-${{ github.sha }}.out

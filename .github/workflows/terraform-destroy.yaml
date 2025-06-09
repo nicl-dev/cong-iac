@@ -53,9 +53,7 @@ jobs:
 
       - name: Terraform Init
         run: |
-          terraform init -no-color \
-            -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-            -backend-config="prefix=gke/${{ github.event.inputs.environment }}"
+          terraform init -no-color
 
       - name: Terraform Destroy
         run: terraform destroy -no-color -auto-approve
