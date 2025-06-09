@@ -101,7 +101,7 @@ jobs:
         run: terraform validate -no-color
 
       - name: Terraform Plan
-        run: terraform plan -no-color -lock-timeout=60s -out=tfplan-${{ matrix.environment }}-${{ github.sha }}.out
+        run: terraform plan -no-color -out=tfplan-${{ matrix.environment }}-${{ github.sha }}.out
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
@@ -157,4 +157,4 @@ jobs:
             -backend-config="prefix=gke/${{ matrix.environment }}"
 
       - name: Terraform Apply
-        run: terraform apply -no-color -lock-timeout=60s tfplan-${{ matrix.environment }}-${{ github.sha }}.out
+        run: terraform apply -no-color tfplan-${{ matrix.environment }}-${{ github.sha }}.out
