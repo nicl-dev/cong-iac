@@ -44,7 +44,8 @@ jobs:
         run: tflint --init
 
       - name: Run TFLint
-        run: tflint --recursive --format sarif > tflint.sarif || true
+        run: tflint --recursive --format sarif > tflint.sarif
+        continue-on-error: true
 
       - name: Upload SARIF (TFLint)
         uses: github/codeql-action/upload-sarif@v3
