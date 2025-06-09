@@ -63,7 +63,7 @@ jobs:
         run: tflint --init
 
       - name: Run TFLint
-        run: tflint
+        run: tflint --recursive
         continue-on-error: true
 
       - name: Checkov GitHub Action

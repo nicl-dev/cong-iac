@@ -8,11 +8,6 @@ variable "gcp_region" {
   default = "europe-west1"
 }
 
-variable "gke_cluster_name" {
-  type        = string
-  description = "GKE cluster name"
-}
-
 variable "gke_node_count" {
   type    = number
   default = 1
