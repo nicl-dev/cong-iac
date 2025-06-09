@@ -22,7 +22,7 @@ resource "google_container_cluster" "primary" {
   initial_node_count       = 1
 }
 
-resource "google_container_node_pool" "default" {
+resource "google_container_node_pool" "main" {
   name     = "cong-nodepool-${var.environment}"
   cluster  = google_container_cluster.primary.name
   location = var.gcp_region
