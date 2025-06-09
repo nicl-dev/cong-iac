@@ -117,7 +117,7 @@ jobs:
 
   apply:
     name: Terraform Apply (${{ matrix.environment }})
-    needs: plan
+    needs: [plan, lint]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
