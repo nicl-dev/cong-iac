@@ -70,7 +70,7 @@ jobs:
         environment: [dev, staging, prod]
 
     concurrency:
-      group: tf-${{ matrix.environment }}
+      group: tf-plan-${{ matrix.environment }}
       cancel-in-progress: false
 
     defaults:
@@ -126,7 +126,7 @@ jobs:
         environment: [dev, staging, prod]
 
     concurrency:
-      group: tf-${{ matrix.environment }}
+      group: tf-apply-${{ matrix.environment }}
       cancel-in-progress: false
 
     environment: ${{ matrix.environment }}
