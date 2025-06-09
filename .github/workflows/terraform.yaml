@@ -69,6 +69,10 @@ jobs:
       matrix:
         environment: [dev, staging, prod]
 
+    concurrency:
+      group: tf-${{ matrix.environment }}
+      cancel-in-progress: false
+
     defaults:
       run:
         working-directory: terraform/environments/${{ matrix.environment }}
@@ -120,6 +124,10 @@ jobs:
     strategy:
       matrix:
         environment: [dev, staging, prod]
+
+    concurrency:
+      group: tf-${{ matrix.environment }}
+      cancel-in-progress: false
 
     environment: ${{ matrix.environment }}
 
