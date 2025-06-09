@@ -102,11 +102,6 @@ jobs:
       - name: Terraform Validate
         run: terraform validate -no-color
 
-      - name: Simulate Terraform Plan
-        run: |
-          echo "Simulating long-running plan for environment ${{ matrix.environment }}"
-          sleep 180
-
       - name: Terraform Plan
         run: terraform plan -no-color -out=tfplan-${{ matrix.environment }}-${{ github.sha }}.out
 
