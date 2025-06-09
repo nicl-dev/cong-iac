@@ -96,6 +96,9 @@ jobs:
             -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
             -backend-config="prefix=gke/${{ matrix.environment }}"
 
+      - name: Terraform Validate
+        run: terraform validate -no-color
+
       - name: Terraform Plan
         run: terraform plan -no-color -lock-timeout=60s -out=tfplan-${{ matrix.environment }}-${{ github.sha }}.out
 
