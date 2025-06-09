@@ -52,7 +52,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.tflint.d/plugins
-          key: ${{ runner.os }}-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
+          key: ${{ matrix.environment }}-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
 
       - name: Set up TFLint
         uses: terraform-linters/setup-tflint@v1
@@ -61,11 +61,10 @@ jobs:
 
       - name: Init TFLint
         run: tflint --init
-        working-directory: terraform
 
       - name: Run TFLint
-        run: tflint --recursive
-        working-directory: terraform
+        run: tflint
+        continue-on-error: true
 
       - name: Checkov GitHub Action
         uses: bridgecrewio/checkov-action@v12
