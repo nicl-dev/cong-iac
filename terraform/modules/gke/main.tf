@@ -10,7 +10,6 @@ resource "google_compute_subnetwork" "subnet" {
   network       = google_compute_network.vpc_network.id
 }
 
-
 resource "google_container_cluster" "primary" {
   name                = "cong-gke-${var.environment}"
   location            = var.gcp_region
@@ -20,5 +19,19 @@ resource "google_container_cluster" "primary" {
   subnetwork = google_compute_subnetwork.subnet.name
 
   remove_default_node_pool = true
-  initial_node_count       = var.gke_node_count
+  initial_node_count       = 1
+}
+
+resource "google_container_node_pool" "default" {
+  name     = "default-node-pool"
+  cluster  = google_container_cluster.primary.name
+  location = var.gcp_region
+
+  node_config {
+    machine_type = "e2-medium"
+    disk_type    = "pd-standard"
+    disk_size_gb = 20
+  }
+
+  initial_node_count = var.gke_node_count
 }
