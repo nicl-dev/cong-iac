@@ -63,7 +63,7 @@ jobs:
         run: tflint --init
 
       - name: Run TFLint
-        run: tflint --format sarif --out tflint.sarif
+        run: tflint --format sarif > tflint.sarif
         continue-on-error: true
 
       - name: Upload SARIF file (TFLint)
