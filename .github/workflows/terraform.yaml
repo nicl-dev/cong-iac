@@ -18,6 +18,51 @@ permissions:
   security-events: write
 
 jobs:
+  lint:
+    name: Terraform Lint & Security Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v1
+        with:
+          tflint_version: v0.50.3
+
+      - name: Cache TFLint Plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.tflint.d/plugins
+          key: tflint-${{ hashFiles('terraform/.tflint.hcl') }}
+
+      - name: Init TFLint
+        run: tflint --init
+
+      - name: Run TFLint
+        run: tflint --recursive --format sarif > tflint.sarif || true
+
+      - name: Upload SARIF (TFLint)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: terraform/tflint.sarif
+
+      - name: Checkov GitHub Action
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+          soft_fail: true
+
+      - name: Upload SARIF (Checkov)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
   plan:
     name: Terraform Plan (${{ matrix.environment }})
     runs-on: ubuntu-latest
@@ -47,43 +92,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Cache TFLint plugin directory
-        uses: actions/cache@v4
-        with:
-          path: ~/.tflint.d/plugins
-          key: ${{ matrix.environment }}-tflint-${{ hashFiles('terraform/.tflint.hcl') }}
-
-      - name: Set up TFLint
-        uses: terraform-linters/setup-tflint@v1
-        with:
-          tflint_version: v0.50.3
-
-      - name: Init TFLint
-        run: tflint --init
-
-      - name: Run TFLint
-        run: tflint --format sarif > tflint.sarif
-        continue-on-error: true
-
-      - name: Upload SARIF file (TFLint)
-        uses: github/codeql-action/upload-sarif@v3
-        if: success() || failure()
-        with:
-          sarif_file: tflint.sarif
-
-      - name: Checkov GitHub Action
-        uses: bridgecrewio/checkov-action@v12
-        with:
-          output_format: cli,sarif
-          output_file_path: console,results.sarif
-          soft_fail: true
-
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
-        if: success() || failure()
-        with:
-          sarif_file: results.sarif
 
       - name: Terraform Init
         run: |
