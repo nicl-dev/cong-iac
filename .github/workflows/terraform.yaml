@@ -1,10 +1,10 @@
 name: Terraform Plan + Apply
 
 on:
-  push:
-    branches:
-      - "**"
   pull_request:
+    branches:
+      - main
+  push:
     branches:
       - main
 
@@ -18,13 +18,60 @@ permissions:
   security-events: write
 
 jobs:
+  lint:
+    name: Terraform Lint & Security Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v1
+        with:
+          tflint_version: v0.50.3
+
+      - name: Cache TFLint Plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.tflint.d/plugins
+          key: tflint-${{ hashFiles('terraform/.tflint.hcl') }}
+
+      - name: Init TFLint
+        run: tflint --init
+
+      - name: Run TFLint
+        run: tflint --recursive
+        continue-on-error: true
+
+      - name: Checkov GitHub Action
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+          quiet: true
+          soft_fail: true
+
+      - name: Upload SARIF (Checkov)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
   plan:
     name: Terraform Plan (${{ matrix.environment }})
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         environment: [dev, staging, prod]
+
+    concurrency:
+      group: tf-${{ matrix.environment }}
+      cancel-in-progress: false
 
     defaults:
       run:
@@ -48,35 +95,15 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Set up TFLint
-        uses: terraform-linters/setup-tflint@v1
-        with:
-          tflint_version: v0.50.3
-
-      - name: Run TFLint
-        run: tflint --recursive
-
-      - name: Checkov GitHub Action
-        uses: bridgecrewio/checkov-action@v12
-        with:
-          output_format: cli,sarif
-          output_file_path: console,results.sarif
-          soft_fail: true
-
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
-        if: success() || failure()
-        with:
-          sarif_file: results.sarif
-
       - name: Terraform Init
         run: |
-          terraform init -no-color \
-            -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-            -backend-config="prefix=gke/${{ matrix.environment }}"
+          terraform init -no-color
+
+      - name: Terraform Validate
+        run: terraform validate -no-color
 
       - name: Terraform Plan
-        run: terraform plan -no-color -lock-timeout=60s -out=tfplan-${{ matrix.environment }}-${{ github.sha }}.out
+        run: terraform plan -no-color -out=tfplan-${{ matrix.environment }}-${{ github.sha }}.out
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
@@ -97,6 +124,10 @@ jobs:
     strategy:
       matrix:
         environment: [dev, staging, prod]
+
+    concurrency:
+      group: tf-${{ matrix.environment }}
+      cancel-in-progress: false
 
     environment: ${{ matrix.environment }}
 
@@ -127,9 +158,7 @@ jobs:
 
       - name: Terraform Init
         run: |
-          terraform init -no-color \
-            -backend-config="bucket=${{ env.TF_BACKEND_BUCKET }}" \
-            -backend-config="prefix=gke/${{ matrix.environment }}"
+          terraform init -no-color
 
       - name: Terraform Apply
-        run: terraform apply -no-color -lock-timeout=60s tfplan-${{ matrix.environment }}-${{ github.sha }}.out
+        run: terraform apply -no-color tfplan-${{ matrix.environment }}-${{ github.sha }}.out

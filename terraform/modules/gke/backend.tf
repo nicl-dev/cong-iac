@@ -6,10 +6,9 @@ terraform {
       source  = "hashicorp/google"
       version = ">= 4.0"
     }
-  }
-
-  backend "gcs" {
-    bucket = "cong-iac-terraform-state"
-    prefix = "gke/staging"
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.11.0"
+    }
   }
 }
