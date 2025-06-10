@@ -7,6 +7,6 @@ module "gke" {
 }
 
 module "namespace" {
-  source = "../../modules/k8s-namespace"
+  source = "../../modules/k8s"
   name   = "demo-namespace"
 }
