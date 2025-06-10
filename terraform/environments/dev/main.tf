@@ -6,7 +6,7 @@ module "gke" {
   gke_node_count = 1
 }
 
-# module "namespace" {
-#   source = "../../modules/k8s"
-#   name   = "demo-namespace"
-# }
+module "namespace" {
+  source = "../../modules/k8s"
+  name   = "demo-namespace"
+}
