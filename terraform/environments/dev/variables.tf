@@ -1,7 +1,9 @@
 variable "gcp_project" {
-  type = string
+  type    = string
+  default = "niclas-test"
 }
 
 variable "gcp_region" {
-  type = string
+  type    = string
+  default = "europe-west1"
 }

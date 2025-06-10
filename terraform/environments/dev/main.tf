@@ -1,8 +1,8 @@
 module "gke" {
   source         = "../../modules/gke"
   environment    = "dev"
-  gcp_project    = "niclas-test"
-  gcp_region     = "europe-west1"
+  gcp_project    = var.gcp_project
+  gcp_region     = var.gcp_region
   gke_node_count = 1
 }
 
